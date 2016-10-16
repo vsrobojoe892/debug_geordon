@@ -96,9 +96,13 @@ pub enum Netmessage {
 }
 
 fn main() {
+    use std::env::args;
     use std::io::{Read, Write};
     use std::net::TcpStream;
-    let mut stream = TcpStream::connect("127.0.0.1:2001").unwrap();
+    let bindaddress = args()
+        .nth(1)
+        .unwrap_or_else(|| panic!("Error: Pass an address in the format \"ip:port\" to bind to."));
+    let mut stream = TcpStream::connect::<&str>(&bindaddress).unwrap();
 
     stream.write(&[42, 72, 69, 76, 76, 79, 42]).unwrap();
 
@@ -114,6 +118,11 @@ fn main() {
             match m {
                 Netmessage::ReqName => {
                     serde_json::to_writer(&mut stream, &Netmessage::NameDebugGeordon).unwrap();
+                }
+
+                Netmessage::Heartbeat => {}
+                Netmessage::ReqNetstats => {
+
                 }
                 _ => println!("Unhandled message: {:?}", m),
             }
