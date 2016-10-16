@@ -102,14 +102,15 @@ fn main() {
 
     stream.write(&[42, 72, 69, 76, 76, 79, 42]).unwrap();
 
-    let mut body = [0u8; 256];
     let mut header = [0u8; 6];
+    let mut body = [0u8; 256];
 
     loop {
         stream.read_exact(&mut header).unwrap();
-        stream.read_exact(&mut body[0..header[5] as usize + 1]).unwrap();
+        let body = &mut body[0..header[5] as usize + 1];
+        stream.read_exact(body).unwrap();
 
-        if let Ok(m) = serde_json::from_slice(&body[0..header[5] as usize + 1]) {
+        if let Ok(m) = serde_json::from_slice(body) {
             match m {
                 Netmessage::ReqName => {
                     serde_json::to_writer(&mut stream, &Netmessage::NameDebugGeordon).unwrap();
