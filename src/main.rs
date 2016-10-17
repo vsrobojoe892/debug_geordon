@@ -11,6 +11,9 @@ fn main() {
     use std::net::TcpStream;
     use std::sync::mpsc::{channel, TryRecvError};
     use std::thread;
+    let mut x = 0;
+    let mut y = 0;
+    let mut map[128][128];
     let bindaddress = args()
         .nth(1)
         .unwrap_or_else(|| panic!("Error: Pass an address in the format \"ip:port\" to bind to."));
@@ -57,10 +60,18 @@ fn main() {
                 // Match the Netmessage type.
                 match m {
                     Netmessage::ReqName => {
-                        serde_json::to_writer(&mut stream, &Netmessage::NameDebugGeordon).unwrap();
+                        serde_json::to_writer(&mut stream, &Netmessage::NameDebugJoe).unwrap();
                     }
                     Netmessage::Heartbeat => {}
                     Netmessage::ReqNetstats => {}
+                    Netmessage::DebugJF(v) => {
+                                            
+                    }
+                    Netmessage::DebugJE(v) => {}
+                    Netmessage::DebugOC(s) => {
+                        println!("PID speed control: {:?}", s);
+                    }
+                    //Netmessage::ReqMovement => {}
                     _ => println!("Unhandled message: {:?}", m),
                 }
             }
