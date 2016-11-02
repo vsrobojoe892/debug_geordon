@@ -13,7 +13,7 @@ fn main() {
     use std::thread;
     let mut x = 0;
     let mut y = 0;
-    let mut map[128][128];
+    let mut map = [[false; 128]; 128];
     let bindaddress = args()
         .nth(1)
         .unwrap_or_else(|| panic!("Error: Pass an address in the format \"ip:port\" to bind to."));
@@ -68,8 +68,12 @@ fn main() {
                                             
                     }
                     Netmessage::DebugJE(v) => {}
-                    Netmessage::DebugOC(s) => {
-                        println!("PID speed control: {:?}", s);
+                    Netmessage::DebugJoeOC(l ,r,tl, tr) => {
+                        println!("PID speed control: Left: {:?}, Right: {:?}", l ,r);
+                        println!("Encoder ticks:  Left: {:?}, Right: {:?}", tl, tr);
+                    }
+                    Netmessage::DebugJoeDistance(d) => {
+                        println!("Moved forward {:?} cm", d);
                     }
                     //Netmessage::ReqMovement => {}
                     _ => println!("Unhandled message: {:?}", m),
@@ -82,11 +86,17 @@ fn main() {
         // Handle input from terminal.
         match input_receiver.try_recv() {
             Ok(line) => {
-                // Match the String.
-                match &line as &str {
-                    "hello" => println!("It got hello"),
-                    "hi" => println!("Got hi"),
-                    _ => println!("dunno"),
+                let words = line.split(' ').collect::<Vec<_>>();
+                if words.len() != 0 {
+                    // Match the String.
+                    match words[0] {
+                        "debugmove" =>{
+                            serde_json::to_writer(&mut stream, &Netmessage::DebugJoeTread(words[1] == "1", words[2] == "1")).unwrap();
+                        }
+                        _ => {
+                        
+                        },
+                    }
                 }
             }
             Err(TryRecvError::Disconnected) => panic!("Input lost."),
