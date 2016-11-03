@@ -1,3 +1,4 @@
+#![feature(slice_patterns)]
 extern crate serde_json;
 extern crate rnet;
 
@@ -64,10 +65,9 @@ fn main() {
                     }
                     Netmessage::Heartbeat => {}
                     Netmessage::ReqNetstats => {}
-                    Netmessage::DebugJF(v) => {
-                                            
+                    Netmessage::Movement(m) => {
+                        println!("{:?}", m);
                     }
-                    Netmessage::DebugJE(v) => {}
                     Netmessage::DebugJoeOC(l ,r,tl, tr) => {
                         println!("PID speed control: Left: {:?}, Right: {:?}", l ,r);
                         println!("Encoder ticks:  Left: {:?}, Right: {:?}", tl, tr);
@@ -87,17 +87,30 @@ fn main() {
         match input_receiver.try_recv() {
             Ok(line) => {
                 let words = line.split(' ').collect::<Vec<_>>();
-                if words.len() != 0 {
+                match words.as_slice() {
+                    &["sensors", dis, lp, rp] => {
+                        serde_json::to_writer(&mut stream, &Netmessage::DebugJoeUltra(
+                                dis.parse().unwrap(),
+                                lp.parse().unwrap(),
+                                rp.parse().unwrap()
+                            )).unwrap();
+                    }
+                        _ => println!("Usage: sensors dis lp rp"),
+                }
+                /*if words.len() != 0 {
                     // Match the String.
                     match words[0] {
                         "debugmove" =>{
-                            serde_json::to_writer(&mut stream, &Netmessage::DebugJoeTread(words[1] == "1", words[2] == "1")).unwrap();
+                            serde_json::to_writer(&mut stream, &Netmessage::DebugJoeTread()).unwrap();
+                        }
+                        "sensors" =>{
+
                         }
                         _ => {
                         
                         },
                     }
-                }
+                }*/
             }
             Err(TryRecvError::Disconnected) => panic!("Input lost."),
             Err(TryRecvError::Empty) => {}
